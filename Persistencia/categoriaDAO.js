@@ -47,6 +47,9 @@ export default class CategoriaDAO{
 
     async excluir(categoria){
         if (categoria instanceof Categoria){
+            //excluir a categoria implica em excluir antes os seus produtos
+            //caso contrário haverá uma violação de integridade referencial no banco de dados relacional
+            //essa restrição deve ser implementada na lógica de negócio da sua aplicação.
             const sql = "DELETE FROM categoria WHERE cat_codigo = ?"; 
             const parametros = [categoria.codigo];
             const conexao = await conectar(); //retorna uma conexão
@@ -80,5 +83,17 @@ export default class CategoriaDAO{
             listaCategorias.push(categoria);
         }
         return listaCategorias;
+    }
+
+    async possuiProdutos(categoria){
+        if (categoria instanceof Categoria){
+            const sql = `SELECT count(*) as qtd FROM produto p
+                         INNER JOIN categoria c ON p.cat_codigo = c.cat_codigo
+                         WHERE c. cat_codigo = ?`;    
+            const parametros = [categoria.codigo];
+            const [registros]  = await global.poolConexoes.execute(sql,parametros);
+            return registros[0].qtd > 0;     
+            
+        }	
     }
 }
